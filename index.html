@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="輸入冰箱裡現有的食材，選擇料理風格，讓 AI 為你產生三道今晚就能動手的料理建議。此為靜態快照版。"
+    />
+    <title>AI 冰箱料理靈感產生器（靜態快照）</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Serif+TC:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --background: hsl(36 38% 97%);
+        --foreground: hsl(25 20% 15%);
+        --card: #ffffff;
+        --primary: hsl(14 62% 46%);
+        --primary-foreground: hsl(36 45% 98%);
+        --secondary: hsl(34 30% 93%);
+        --secondary-foreground: hsl(25 22% 20%);
+        --muted: hsl(34 25% 94%);
+        --muted-foreground: hsl(25 10% 45%);
+        --accent: hsl(34 44% 91%);
+        --accent-foreground: hsl(25 30% 22%);
+        --border: hsl(30 22% 88%);
+        --destructive: hsl(0 70% 48%);
+        --sage: hsl(152 24% 38%);
+        --clay: hsl(18 58% 50%);
+        --sun: hsl(38 84% 56%);
+        --radius: 0.875rem;
+      }
+
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; }
+      body {
+        font-family: "Noto Sans TC", "PingFang TC", ui-sans-serif, system-ui, sans-serif;
+        color: var(--foreground);
+        background-color: var(--background);
+        background-image:
+          radial-gradient(58rem 30rem at 88% -12%, hsl(38 84% 56% / 0.18), transparent 62%),
+          radial-gradient(46rem 26rem at 2% 4%, hsl(152 24% 38% / 0.12), transparent 58%);
+        background-attachment: fixed;
+        -webkit-font-smoothing: antialiased;
+        line-height: 1.6;
+      }
+      ::selection { background: hsl(38 84% 56% / 0.35); }
+      h1, h2, h3 { font-family: "Noto Serif TC", "Songti TC", serif; font-weight: 600; margin: 0; }
+      p { margin: 0; }
+      a { color: var(--primary); }
+
+      .wrap { max-width: 72rem; margin: 0 auto; padding: 0 1.25rem; }
+      @media (min-width: 640px) { .wrap { padding: 0 2rem; } }
+
+      header.site { padding: 3.5rem 0 2.5rem; }
+      @media (min-width: 640px) { header.site { padding: 5rem 0 3rem; } }
+      .eyebrow { display: flex; align-items: center; gap: 0.75rem; }
+      .eyebrow .badge {
+        display: flex; align-items: center; justify-content: center;
+        width: 2.75rem; height: 2.75rem; border-radius: 1rem;
+        background: hsl(14 62% 46% / 0.1); color: var(--primary);
+      }
+      .eyebrow .label { font-size: 11px; font-weight: 500; letter-spacing: 0.32em; color: var(--muted-foreground); }
+      header.site h1 {
+        margin-top: 1.75rem; font-size: 2rem; line-height: 1.25; letter-spacing: -0.01em; max-width: 42rem;
+      }
+      @media (min-width: 640px) { header.site h1 { font-size: 2.75rem; } }
+      header.site .sub { margin-top: 1.25rem; max-width: 36rem; font-size: 15px; color: var(--muted-foreground); }
+      @media (min-width: 640px) { header.site .sub { font-size: 16px; } }
+
+      .grid { display: grid; gap: 2rem; }
+      @media (min-width: 1024px) { .grid { grid-template-columns: 5fr 7fr; gap: 2.5rem; } }
+      .col-left { display: flex; flex-direction: column; gap: 1.25rem; }
+      @media (min-width: 1024px) { .col-left { position: sticky; top: 2rem; } }
+
+      .card {
+        background: var(--card); border: 1px solid var(--border); border-radius: 1.5rem;
+        padding: 1.5rem; box-shadow: 0 2px 18px -12px hsl(25 30% 25% / 0.35);
+      }
+      .card h2 { font-size: 1.125rem; }
+      .row-between { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+      .hint { font-size: 12px; color: var(--muted-foreground); }
+      .mt-4 { margin-top: 1rem; }
+
+      textarea#ingredients {
+        width: 100%; min-height: 176px; resize: vertical; margin-top: 1rem;
+        border: 1px solid var(--border); border-radius: 1rem; background: hsl(36 38% 97% / 0.7);
+        padding: 0.75rem 1rem; font: inherit; font-size: 15px; line-height: 1.7; color: var(--foreground);
+        outline: none; transition: box-shadow 0.2s, border-color 0.2s;
+      }
+      textarea#ingredients:focus { border-color: hsl(14 62% 46% / 0.5); box-shadow: 0 0 0 4px hsl(14 62% 46% / 0.12); }
+      textarea#ingredients::placeholder { color: hsl(25 10% 45% / 0.55); }
+
+      .pills { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-top: 1rem; }
+      @media (min-width: 640px) { .pills { grid-template-columns: repeat(5, 1fr); } }
+      @media (min-width: 1024px) { .pills { grid-template-columns: repeat(3, 1fr); } }
+      .pill { position: relative; }
+      .pill input { position: absolute; opacity: 0; width: 0; height: 0; }
+      .pill span {
+        display: block; cursor: pointer; user-select: none; text-align: center;
+        border: 1px solid var(--border); background: hsl(36 38% 97% / 0.6);
+        border-radius: 1rem; padding: 0.625rem 0.75rem; font-size: 14px; color: var(--muted-foreground);
+        transition: all 0.2s;
+      }
+      .pill span:hover { border-color: hsl(14 62% 46% / 0.4); color: var(--foreground); }
+      .pill input:checked + span { border-color: hsl(14 62% 46% / 0.6); background: hsl(14 62% 46% / 0.1); color: var(--primary); font-weight: 500; }
+
+      .modes { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; }
+      .mode { position: relative; display: flex; gap: 0.75rem; align-items: flex-start; cursor: pointer; user-select: none; border: 1px solid var(--border); background: hsl(36 38% 97% / 0.6); border-radius: 1rem; padding: 0.75rem 1rem; transition: all 0.2s; }
+      .mode:hover { border-color: hsl(14 62% 46% / 0.4); }
+      .mode input { position: absolute; opacity: 0; width: 0; height: 0; }
+      .mode .dot { margin-top: 0.125rem; flex: 0 0 auto; width: 1.1rem; height: 1.1rem; border-radius: 999px; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+      .mode .dot::after { content: ""; width: 0.5rem; height: 0.5rem; border-radius: 999px; background: transparent; transition: all 0.2s; }
+      .mode input:checked ~ .dot { border-color: var(--primary); }
+      .mode input:checked ~ .dot::after { background: var(--primary); }
+      .mode .title { font-size: 14px; color: var(--foreground); }
+      .mode input:checked ~ .body .title { color: var(--primary); font-weight: 500; }
+      .mode .desc { margin-top: 0.25rem; font-size: 12px; line-height: 1.6; color: var(--muted-foreground); }
+
+      .btn {
+        display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%;
+        height: 3.5rem; border: none; border-radius: 1rem; cursor: pointer;
+        background: var(--primary); color: var(--primary-foreground);
+        font-family: inherit; font-size: 16px; font-weight: 500; letter-spacing: 0.02em;
+        box-shadow: 0 14px 34px -18px hsl(14 70% 45% / 0.85); transition: background 0.2s, transform 0.1s;
+      }
+      .btn:hover { background: hsl(14 62% 42%); }
+      .btn:active { transform: translateY(1px); }
+      .btn:disabled { opacity: 0.6; cursor: default; }
+
+      .alert { border: 1px solid hsl(0 70% 48% / 0.3); background: hsl(0 70% 48% / 0.1); color: var(--destructive); border-radius: 1rem; padding: 0.75rem 1rem; font-size: 14px; }
+
+      .empty { border: 1px dashed var(--border); background: hsl(0 0% 100% / 0.6); border-radius: 1.5rem; padding: 3.5rem 1.75rem; text-align: center; }
+      .empty .ico { margin: 0 auto; display: flex; align-items: center; justify-content: center; width: 3rem; height: 3rem; border-radius: 1rem; background: var(--accent); color: var(--primary); }
+      .empty h3 { margin-top: 1.25rem; font-size: 1.25rem; }
+      .empty p { margin: 0.75rem auto 0; max-width: 24rem; font-size: 14px; color: var(--muted-foreground); }
+      .samples { margin-top: 1.5rem; display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; }
+      .samples span { border: 1px solid var(--border); background: hsl(36 38% 97% / 0.7); border-radius: 999px; padding: 0.25rem 0.75rem; font-size: 12px; color: var(--muted-foreground); }
+
+      .notice { border: 1px solid var(--border); background: var(--card); border-radius: 1.5rem; padding: 2.5rem 1.75rem; text-align: center; }
+      .notice .ico { margin: 0 auto; display: flex; align-items: center; justify-content: center; width: 3rem; height: 3rem; border-radius: 1rem; background: var(--accent); color: var(--primary); }
+      .notice h3 { margin-top: 1.25rem; font-size: 1.25rem; }
+      .notice p { margin: 0.75rem auto 0; max-width: 28rem; font-size: 14px; line-height: 1.7; color: var(--muted-foreground); }
+      .notice .link { margin-top: 1.5rem; display: inline-flex; align-items: center; gap: 0.4rem; border: 1px solid var(--border); border-radius: 999px; padding: 0.5rem 1.1rem; font-size: 14px; text-decoration: none; color: var(--primary); background: hsl(36 38% 97% / 0.6); transition: all 0.2s; }
+      .notice .link:hover { border-color: var(--primary); background: hsl(14 62% 46% / 0.08); }
+
+      footer.site { margin-top: 4rem; padding-bottom: 2.5rem; text-align: center; }
+      footer.site p { font-size: 12px; color: var(--muted-foreground); }
+
+      .hidden { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <header class="site wrap">
+      <div class="eyebrow">
+        <span class="badge" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" y1="17" x2="18" y2="17"/></svg>
+        </span>
+        <span class="label">FRIDGE TO TABLE</span>
+      </div>
+      <h1>冰箱裡還有什麼，<br class="hidden sm:block" />今晚就煮什麼。</h1>
+      <p class="sub">把剩下的食材打進去，選好想要的風味與模式，讓 AI 為你端上三道今晚就能動手的料理靈感。</p>
+    </header>
+
+    <main class="wrap" style="padding-bottom: 5rem;">
+      <div class="grid">
+        <div class="col-left">
+          <section class="card">
+            <div class="row-between">
+              <h2>冰箱裡有什麼？</h2>
+              <span class="hint" id="count">一行一項</span>
+            </div>
+            <textarea id="ingredients" placeholder="雞蛋&#10;高麗菜&#10;洋蔥&#10;豆腐&#10;番茄"></textarea>
+            <p class="hint mt-4">一行輸入一種食材，品項數量不限，空白行會自動忽略。</p>
+          </section>
+
+          <section class="card">
+            <h2>料理風格</h2>
+            <div class="pills" id="stylePills">
+              <label class="pill"><input type="radio" name="style" value="不限" checked /><span>不限</span></label>
+              <label class="pill"><input type="radio" name="style" value="台式" /><span>台式</span></label>
+              <label class="pill"><input type="radio" name="style" value="日式" /><span>日式</span></label>
+              <label class="pill"><input type="radio" name="style" value="韓式" /><span>韓式</span></label>
+              <label class="pill"><input type="radio" name="style" value="西式" /><span>西式</span></label>
+            </div>
+          </section>
+
+          <section class="card">
+            <h2>食材模式</h2>
+            <div class="modes" id="modes">
+              <label class="mode">
+                <input type="radio" name="mode" value="strict" checked />
+                <span class="dot" aria-hidden="true"></span>
+                <span class="body">
+                  <span class="title">嚴格使用現有食材</span>
+                  <span class="desc">只用冰箱裡的東西，一道都不缺。</span>
+                </span>
+              </label>
+              <label class="mode">
+                <input type="radio" name="mode" value="flexible" />
+                <span class="dot" aria-hidden="true"></span>
+                <span class="body">
+                  <span class="title">可補買少量食材</span>
+                  <span class="desc">允許缺少 1 至 2 樣，會標示出來。</span>
+                </span>
+              </label>
+            </div>
+          </section>
+
+          <p class="alert hidden" id="error"></p>
+
+          <button class="btn" id="generate" type="button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .962 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.962 0z"/></svg>
+            產生料理
+          </button>
+        </div>
+
+        <div class="col-right">
+          <div id="empty" class="empty">
+            <span class="ico" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .962 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.962 0z"/></svg>
+            </span>
+            <h3>等待你的第一道靈感</h3>
+            <p>在左側輸入冰箱裡剩下的食材，選好風味與模式，按下「產生料理」就會得到三道建議。</p>
+            <div class="samples">
+              <span>雞蛋</span><span>高麗菜</span><span>洋蔥</span><span>豆腐</span><span>番茄</span>
+            </div>
+          </div>
+
+          <div id="notice" class="notice hidden">
+            <span class="ico" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </span>
+            <h3>這份是靜態快照</h3>
+            <p>「產生料理」的 AI 推薦需要連線到線上版才能運作。你的食材與設定已經記錄在這個檔案裡，連上線上版後可直接使用。</p>
+            <a class="link" href="https://venomous-smart-fridge-chef.base44.app" target="_blank" rel="noopener noreferrer">
+              前往線上版產生料理
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site wrap">
+      <p>靈感僅供參考，下廚前請確認食材新鮮度與個人過敏原。</p>
+    </footer>
+
+    <script>
+      (function () {
+        var DRAFT_KEY = "fridge-recipes-draft";
+        var draft = {};
+        try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY)) || {}; } catch (e) { draft = {}; }
+
+        var ingredients = document.getElementById("ingredients");
+        var countEl = document.getElementById("count");
+        var errorEl = document.getElementById("error");
+        var generateBtn = document.getElementById("generate");
+        var emptyEl = document.getElementById("empty");
+        var noticeEl = document.getElementById("notice");
+
+        ingredients.value = draft.ingredientsText || "";
+        if (draft.style) {
+          var styleEl = document.querySelector('input[name="style"][value="' + draft.style + '"]');
+          if (styleEl) styleEl.checked = true;
+        }
+        if (draft.mode) {
+          var modeEl = document.querySelector('input[name="mode"][value="' + draft.mode + '"]');
+          if (modeEl) modeEl.checked = true;
+        }
+
+        function currentStyle() {
+          var el = document.querySelector('input[name="style"]:checked');
+          return el ? el.value : "不限";
+        }
+        function currentMode() {
+          var el = document.querySelector('input[name="mode"]:checked');
+          return el ? el.value : "strict";
+        }
+        function updateCount() {
+          var n = ingredients.value.split("\n").map(function (s) { return s.trim(); }).filter(Boolean).length;
+          countEl.textContent = n > 0 ? "已輸入 " + n + " 項食材" : "一行一項";
+        }
+        function saveDraft() {
+          try {
+            localStorage.setItem(DRAFT_KEY, JSON.stringify({
+              ingredientsText: ingredients.value,
+              style: currentStyle(),
+              mode: currentMode()
+            }));
+          } catch (e) {}
+        }
+
+        ingredients.addEventListener("input", function () { updateCount(); saveDraft(); });
+        document.querySelectorAll('input[name="style"]').forEach(function (el) { el.addEventListener("change", saveDraft); });
+        document.querySelectorAll('input[name="mode"]').forEach(function (el) { el.addEventListener("change", saveDraft); });
+        updateCount();
+
+        generateBtn.addEventListener("click", function () {
+          var list = ingredients.value.split("\n").map(function (s) { return s.trim(); }).filter(Boolean);
+          if (!list.length) {
+            errorEl.textContent = "請先輸入至少一項冰箱裡的食材。";
+            errorEl.classList.remove("hidden");
+            return;
+          }
+          errorEl.classList.add("hidden");
+          emptyEl.classList.add("hidden");
+          noticeEl.classList.remove("hidden");
+          saveDraft();
+        });
+      })();
+    </script>
+  </body>
+</html>
